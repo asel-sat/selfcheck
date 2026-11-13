@@ -755,7 +755,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ATTR_KZ = { 'Отчет': 'Есеп', 'Факультет': 'Факультет', 'Критерий': 'Критерий', 'Язык / Тіл': 'Тіл / Язык', '1. Текст вопроса?\nA. ...\nB. ...\nC. ...\nD. ...\nE. ...\nОтвет - B\nУровень 1': '1. Сұрақ мәтіні?\nA. ...\nB. ...\nC. ...\nD. ...\nE. ...\nЖауап - B\nДеңгей 1' };
 let lang = 'ru';
-try { if (localStorage.getItem('umkd-lang') === 'kz') lang = 'kz'; } catch (e) {}
+try { if (localStorage.getItem('lang') === 'kz') lang = 'kz'; } catch (e) {}
 
 // ---------- UI strings ----------
 const T = {
@@ -1065,8 +1065,8 @@ function render() {
   renderAdmin();
 }
 $('#dir').addEventListener('change', (e) => { S.period = +e.target.value; run(); });
-$('#lang-ru').addEventListener('click', () => { lang = 'ru'; try { localStorage.setItem('umkd-lang', 'ru'); } catch (e) {} if (S.sample) $('#demo').click(); else render(); });
-$('#lang-kz').addEventListener('click', () => { lang = 'kz'; try { localStorage.setItem('umkd-lang', 'kz'); } catch (e) {} if (S.sample) $('#demo').click(); else render(); });
+$('#lang-ru').addEventListener('click', () => { lang = 'ru'; try { localStorage.setItem('lang', 'ru'); } catch (e) {} if (S.sample) $('#demo').click(); else render(); });
+$('#lang-kz').addEventListener('click', () => { lang = 'kz'; try { localStorage.setItem('lang', 'kz'); } catch (e) {} if (S.sample) $('#demo').click(); else render(); });
 
 // ---------- report text ----------
 function reportText() {
@@ -1221,4 +1221,7 @@ try { if (/github\.io$/.test(location.hostname)) $('#homeLink').hidden = false; 
 render();
 })();
 </script>
+
+<script>/* один язык на всех страницах: при возврате кнопкой «Назад» страница подхватывает выбранный язык */
+window.addEventListener('pageshow',function(e){try{var l=localStorage.getItem('lang')==='kz'?'kz':'ru',h=(document.documentElement.lang||'').toLowerCase(),cur=(h==='kk'||h==='kz')?'kz':'ru';if(e.persisted&&l!==cur)location.reload();}catch(x){}});</script>
 </body></html>

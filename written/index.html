@@ -1286,4 +1286,7 @@ $('#pdfBtn').addEventListener('click', savePdf); $('#pdfTop').addEventListener('
 try { if (!/github\.io$/.test(location.hostname)) $('#homeLink').hidden = true; } catch (e) {}
 render();
 </script>
+
+<script>/* один язык на всех страницах: при возврате кнопкой «Назад» страница подхватывает выбранный язык */
+window.addEventListener('pageshow',function(e){try{var l=localStorage.getItem('lang')==='kz'?'kz':'ru',h=(document.documentElement.lang||'').toLowerCase(),cur=(h==='kk'||h==='kz')?'kz':'ru';if(e.persisted&&l!==cur)location.reload();}catch(x){}});</script>
 </body></html>

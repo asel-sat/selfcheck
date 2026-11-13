@@ -875,7 +875,7 @@ const CODE_CRIT_EXTRA = { optCount:'bank', multiKey:'bank', noKey:'bank', keyMis
 
 const ATTR_KZ = { 'Отчет': 'Есеп', 'Факультет': 'Факультет', 'Критерий': 'Критерий', 'Язык / Тіл': 'Тіл / Язык', '1. Текст вопроса?\nA. ...\nB. ...\nC. ...\nD. ...\nE. ...\nОтвет - B\nУровень 1': '1. Сұрақ мәтіні?\nA. ...\nB. ...\nC. ...\nD. ...\nE. ...\nЖауап - B\nДеңгей 1' };
 let lang = 'ru';
-try { lang = localStorage.getItem('tc-lang') || 'ru'; } catch (e) {}
+try { lang = localStorage.getItem('lang') === 'kz' ? 'kz' : 'ru'; } catch (e) {}
 const t = (k, p) => { let s = (T[lang][k] ?? T.ru[k] ?? k); if (p) for (const [a, b] of Object.entries(p)) s = s.split('{' + a + '}').join(b); return s; };
 const msg = (i) => { let s = MSG[lang][i.code] || i.code; const p = { ...i, a: i.a ?? i.nums[0], b: i.b ?? i.nums[1] }; for (const [a, b] of Object.entries(p)) if (typeof b !== 'object') s = s.split('{' + a + '}').join(b); return s; };
 
@@ -1161,7 +1161,7 @@ $('#demo').addEventListener('click', () => { runSample(); setStatus(''); });
 document.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => { S.sev = b.dataset.sev; render(); }));
 $('#critSel').addEventListener('change', (e) => { S.crit = e.target.value; renderQ(); });
 document.addEventListener('click', (e) => { const g = e.target.closest('[data-goto]'); if (g) { S.crit = g.dataset.goto; S.sev = 'all'; render(); $('#q-h').scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
-const setLang = (l) => { lang = l; try { localStorage.setItem('tc-lang', l); } catch (e) {} if (S.sample) runSample(); else render(); };
+const setLang = (l) => { lang = l; try { localStorage.setItem('lang', l); } catch (e) {} if (S.sample) runSample(); else render(); };
 $('#lang-ru').addEventListener('click', () => setLang('ru'));
 $('#lang-kz').addEventListener('click', () => setLang('kz'));
 $('#copy').addEventListener('click', () => {
@@ -1548,3 +1548,5 @@ runSample();
 })();
 try { if (/github\.io$/.test(location.hostname)) document.getElementById('homeLink').hidden = false; } catch (e) {}
 </script>
+<script>/* один язык на всех страницах: при возврате кнопкой «Назад» страница подхватывает выбранный язык */
+window.addEventListener('pageshow',function(e){try{var l=localStorage.getItem('lang')==='kz'?'kz':'ru',h=(document.documentElement.lang||'').toLowerCase(),cur=(h==='kk'||h==='kz')?'kz':'ru';if(e.persisted&&l!==cur)location.reload();}catch(x){}});</script>

@@ -42,4 +42,7 @@ function set(l){var d=l==='kz'?KZ:RU;document.documentElement.lang=l;document.qu
 document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){set(b.dataset.l)}});
 try{var s=localStorage.getItem('lang');if(s)set(s)}catch(e){}
 </script>
+
+<script>/* один язык на всех страницах: при возврате кнопкой «Назад» страница подхватывает выбранный язык */
+window.addEventListener('pageshow',function(e){try{var l=localStorage.getItem('lang')==='kz'?'kz':'ru',h=(document.documentElement.lang||'').toLowerCase(),cur=(h==='kk'||h==='kz')?'kz':'ru';if(e.persisted&&l!==cur)location.reload();}catch(x){}});</script>
 </body></html>
