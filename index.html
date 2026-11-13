@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Проверка качества экзаменационных материалов и УМКД</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<style>
+:root{--bg:#f3f5f8;--paper:#fff;--ink:#15233a;--muted:#5b6880;--line:#d6dce6;--accent:#1f4f9a;--soft:#e9edf3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1520;--paper:#161e2c;--ink:#e4e9f2;--muted:#9aa6bb;--line:#2a3548;--accent:#7aa7ef;--soft:#1d2738;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1520;--paper:#161e2c;--ink:#e4e9f2;--muted:#9aa6bb;--line:#2a3548;--accent:#7aa7ef;--soft:#1d2738;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Golos Text",system-ui,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:48px 16px 64px}
+.org{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font:600 clamp(26px,5vw,38px)/1.2 Unbounded,"Golos Text",sans-serif;margin:10px 0 12px}
+.lead{color:var(--muted);max-width:620px;margin:0 0 36px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{display:block;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card h2{font:600 18px/1.3 Unbounded,"Golos Text",sans-serif;margin:0 0 8px}
+.card p{margin:0 0 14px;color:var(--muted);font-size:15px}
+.go{color:var(--accent);font-weight:600}
+.soon{opacity:.7}.soon .go{color:var(--muted);font-weight:500}
+.lang{float:right;font-size:14px}.lang button{background:none;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:3px 9px;cursor:pointer;font:inherit}
+.lang button.on{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.note{margin-top:36px;padding:14px 16px;background:var(--soft);border-radius:10px;font-size:14px;color:var(--muted)}
+</style></head><body><script src="nav.js"></script>
+<div class="wrap">
+<div class="lang"><button data-l="ru" class="on">РУС</button> <button data-l="kz">ҚАЗ</button></div>
+<div class="org" data-t="org">КазНУ им. аль-Фараби · Департамент по академическим вопросам · Управление по обеспечению качества образовательного процесса · Офис академической аналитики и контроля качества</div>
+<h1 data-t="h1">Проверка качества экзаменационных материалов и УМКД</h1>
+<p class="lead" data-t="lead">Сервис предназначен для самопроверки экзаменационных материалов (тестовых, письменных и устных заданий) профессорско-преподавательским составом и академическими комитетами факультетов до их размещения в ИС Univer. Проверка проводится по критериям экспертизы, установленным формой Ф 708-02-26, и требованиям Правил проведения итогового контроля, что обеспечивает своевременное выявление и устранение несоответствий. Раздел «УМКД» предназначен для самопроверки учебно-методических комплексов дисциплин перед экспертизой по чек-листу ОААиККО и Методическим рекомендациям по разработке и оформлению УМКД в ИС Univer от 06.01.2025.</p>
+<div class="grid">
+<a class="card" href="tests/"><h2 data-t="t1">Тестовые задания</h2><p data-t="d1">Банк тестовых заданий из ИС Univer (PDF), DOCX или XLSX: 9 критериев чек-листа Ф 708-02-26, структура банка, соответствие силлабусу, PDF-отчет.</p><span class="go" data-t="open">Открыть →</span></a>
+<a class="card" href="written/"><h2 data-t="t2">Письменные/устные задания</h2><p data-t="d2">Перечень вопросов или билеты: 10 критериев чек-листа Ф 708-02-26, уровни таксономии, структура билетов, соответствие результатам обучения силлабуса, PDF-отчет.</p><span class="go" data-t="open2">Открыть →</span></a>
+<a class="card" href="umkd/"><h2 data-t="t3">УМКД</h2><p data-t="d3">Силлабус, конспекты лекций, методические рекомендации, руководство по СРО и ПИК (DOCX, PDF, PPTX): наличие компонентов, критерии B1–B7 чек-листа экспертизы УМКД, предварительный балл, PDF-отчет.</p><span class="go" data-t="open3">Открыть →</span></a>
+</div>
+<div class="note" data-t="note">Файлы обрабатываются только в вашем браузере и никуда не загружаются.</div>
+</div>
+<script>
+var KZ={org:"Әл-Фараби атындағы ҚазҰУ · Академиялық мәселелер жөніндегі департамент · Білім беру үдерісінің сапасын қамтамасыз ету басқармасы · Академиялық талдау және білім сапасын бақылау кеңсесі",h1:"Емтихан материалдары мен ПОӘК сапасын тексеру",lead:"Факультеттердің академиялық комитет мүшелері және оқытушы – профессорлық құрамының емтихан материалдарын (тест, жазбаша және ауызша тапсырмаларды) АЖ «Univer» жүйесіне енгізер алдында өзін – өзі тексеруге арналған сервис болып табылады. Бұл сәйкессіздіктерді уақытылы анықтауға және жоюға мүмкіндік беретін Ф 708-02-26 нысанында белгіленген сараптама критерийлері мен Қорытынды бақылауды өткізу қағидаларының талаптарына сәйкес өткізілетін тексеріс жұмыстары. «ПОӘК» бөлімі пәндердің оқу-әдістемелік кешендерін Академиялық талдау және білім сапасын бақылау кеңсесінің чек-парағы және 2025 жылғы 6 қаңтардағы Univer АЖ-да ПОӘК әзірлеу және рәсімдеу жөніндегі әдістемелік ұсынымдар бойынша сараптамаға дейін өзін-өзі тексеруге арналған.",t1:"Тест тапсырмалары",d1:"Univer АЖ тест банкі (PDF), DOCX немесе XLSX: Ф 708-02-26 чек-парағының 9 критерийі, банк құрылымы, силлабусқа сәйкестік, PDF есеп.",open:"Ашу →",t2:"Жазбаша/ауызша тапсырмалар",d2:"Сұрақтар тізбесі немесе билеттер: Ф 708-02-26 чек-парағының 10 критерийі, таксономия деңгейлері, билеттер құрылымы, силлабустағы ОН-ға сәйкестік, PDF есеп.",open2:"Ашу →",t3:"ПОӘК",d3:"Силлабус, дәріс конспектілері, әдістемелік ұсынымдар, БӨЖ нұсқаулығы және ҚББ (DOCX, PDF, PPTX): компоненттердің болуы, ПОӘК сараптамасы чек-парағының B1–B7 критерийлері, алдын ала балл, PDF есеп.",open3:"Ашу →",note:"Файлдар тек сіздің браузеріңізде өңделеді және ешқайда жүктелмейді."};
+var RU={};document.querySelectorAll('[data-t]').forEach(function(e){RU[e.dataset.t]=e.textContent});
+function set(l){var d=l==='kz'?KZ:RU;document.documentElement.lang=l;document.querySelectorAll('[data-t]').forEach(function(e){e.textContent=d[e.dataset.t]});document.querySelectorAll('.lang button').forEach(function(b){b.classList.toggle('on',b.dataset.l===l)});try{localStorage.setItem('lang',l)}catch(e){}}
+document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){set(b.dataset.l)}});
+try{var s=localStorage.getItem('lang');if(s)set(s)}catch(e){}
+</script>
+</body></html>
