@@ -1023,7 +1023,14 @@ function render() {
   document.querySelectorAll('[aria-label], [placeholder]').forEach((el) => { if (el.closest('nav.oa-nav')) return; for (const a of ['aria-label', 'placeholder']) { if (!el.hasAttribute(a)) continue; const k = 'data-' + a + '-ru'; if (!el.hasAttribute(k)) el.setAttribute(k, el.getAttribute(a)); const ru = el.getAttribute(k); el.setAttribute(a, lang === 'kz' ? (ATTR_KZ[ru] ?? ru) : ru); } });
   $('#lang-ru').setAttribute('aria-pressed', lang === 'ru'); $('#lang-kz').setAttribute('aria-pressed', lang === 'kz');
   if (lastStatus) $('#status').textContent = t(lastStatus.k, { n: lastStatus.n });
-  if (!S.res) return;
+  if (!S.res) {
+    // до загрузки файла: нарушений 0/9, чек-лист без ответов
+    $('#score').textContent = '0/9'; $('#score').className = 'big';
+    $('#scoreSub').textContent = ''; $('#facts').innerHTML = '';
+    $('#form').innerHTML = `<tr><th>${t('thN')}</th><th>${t('thQ')}</th><th>${t('thHow')}</th><th>${t('thA')}</th><th>${t('thNote')}</th></tr>` + CRIT.map((c, idx) => { const [name, sub] = c[lang];
+      return `<tr><td class="n">${idx + 1}</td><td><div class="crit-name">${esc(name)}</div><div class="crit-sub">(${esc(sub)})</div></td><td class="how">${t('how_' + c.how)}</td><td class="ans">—</td><td></td></tr>`; }).join('');
+    return;
+  }
   const { parsed, res } = S;
   const states = CRIT.map((c) => ({ c, ...critState(c.id) }));
   const viol = states.filter((s) => s.st === 'bad').length;
@@ -1544,7 +1551,6 @@ try { const sv = JSON.parse(localStorage.getItem('tc-sender') || 'null'); if (sv
 initDb();
 
 render();
-runSample();
 })();
 try { if (/github\.io$/.test(location.hostname)) document.getElementById('homeLink').hidden = false; } catch (e) {}
 </script>
