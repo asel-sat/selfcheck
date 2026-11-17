@@ -843,7 +843,10 @@ const MSG = {
   level5:'Есть задания 5-го уровня ({count}), а в новом формате 4 уровня',
   noLevels:'Уровни сложности в файле не найдены — проверьте распределение 40/30/20/10 вручную',
   noKeysAtAll:'В файле нет ключей ответов, поэтому верные ответы не проверены. Для полной проверки выгрузите банк с ответами',
-  typeMulti:'{count} заданий имеют тип «с множественным выбором». По новому формату — один верный ответ из 5 (тип «с одиночным выбором»)'
+  typeMulti:'{count} заданий имеют тип «с множественным выбором». По новому формату — один верный ответ из 5 (тип «с одиночным выбором»)',
+  uniPlaceholder:'Остался текст-заготовка шаблона Univer вместо ответа («Неправильный ответ 1», «Правильный ответ»…) — замените своими ответами',
+  uniDigit:'Похоже на опечатку: в вариантах ответа осталась цифра из шаблона (1–4) — уберите ее, иначе она уйдет в Univer',
+  uniSampleQ:'Остался вопрос-пример из шаблона Univer («Что такое алгоритм?») — замените своим вопросом'
  },
  kz: {
   noText:'Тапсырма мәтіні жоқ (немесе тым қысқа)', optCount:'Жауап нұсқалары саны: {count}, ал 5 болуы керек (Univer форматы: 5 нұсқа, 1 дұрыс)',
@@ -868,7 +871,10 @@ const MSG = {
   level5:'5-деңгейлі тапсырмалар бар ({count}), ал жаңа форматта 4 деңгей',
   noLevels:'Файлда күрделілік деңгейлері табылмады — 40/30/20/10 үлесін қолмен тексеріңіз',
   noKeysAtAll:'Файлда жауап кілттері жоқ, сондықтан дұрыс жауаптар тексерілмеді. Толық тексеру үшін банкті жауаптарымен жүктеңіз',
-  typeMulti:'{count} тапсырманың түрі «көп таңдаулы». Жаңа формат бойынша — 5 нұсқадан бір дұрыс жауап («бір таңдаулы» түрі)'
+  typeMulti:'{count} тапсырманың түрі «көп таңдаулы». Жаңа формат бойынша — 5 нұсқадан бір дұрыс жауап («бір таңдаулы» түрі)',
+  uniPlaceholder:'Жауаптың орнында Univer үлгісінің дайындама мәтіні қалған («Дұрыс емес жауап 1», «Дұрыс жауап»…) — өз жауаптарыңызбен ауыстырыңыз',
+  uniDigit:'Қате болуы мүмкін: жауап нұсқаларында үлгіден қалған сан бар (1–4) — оны алып тастаңыз, әйтпесе Univer-ге кетеді',
+  uniSampleQ:'Univer үлгісіндегі мысал-сұрақ қалған («Алгоритм дегеніміз не?») — өз сұрағыңызбен ауыстырыңыз'
  }
 };
 const CODE_CRIT_EXTRA = { optCount:'bank', multiKey:'bank', noKey:'bank', keyMissing:'bank' };
@@ -1004,6 +1010,21 @@ function univerDocx(div) {
   });
   return { meta: { title: '', stage: '', levelsBank: {}, mode: 'univer' }, questions: qs };
 }
+// leftovers of the Univer template that the teacher forgot to replace: «Неправильный ответ 1», «Правильный ответ», digits 1–4, sample question
+const RE_UNI_PH = /^(?:неправильный|неверный|правильный|верный|дұрыс\s+емес|дұрыс|incorrect|correct|wrong)\s+(?:ответ|вариант|жауап|answer)(?:\s*[1-9])?(?=$|[\s.,;:–—-])/i;
+const RE_UNI_DIGIT = /(?:^|\s)[1-4]\s*[.)]?\s*$|^[1-4](?:\s+|\s*[.)]\s+)(?=\p{L})/u;
+const RE_UNI_SAMPLE = /^(?:что такое алгоритм|алгоритм дегеніміз(?: не)?|what is an algorithm)\s*[?.]?$/i;
+function univerLeftovers(parsed) {
+  const out = [];
+  parsed.questions.forEach((q) => {
+    const ph = q.options.filter((o) => RE_UNI_PH.test(o.text.trim())).map((o) => o.letter);
+    if (ph.length) out.push({ crit: 'bank', sev: 'error', code: 'uniPlaceholder', nums: [q.num], letters: ph.join(', ') });
+    const dg = q.options.filter((o) => !ph.includes(o.letter) && RE_UNI_DIGIT.test(o.text.trim())).map((o) => o.letter);
+    if (dg.length) out.push({ crit: 'bank', sev: 'error', code: 'uniDigit', nums: [q.num], letters: dg.join(', ') });
+    if (RE_UNI_SAMPLE.test(q.text.trim())) out.push({ crit: 'bank', sev: 'error', code: 'uniSampleQ', nums: [q.num] });
+  });
+  return out;
+}
 function rowToLines(cells, lines) {
   if (cells.length >= 6) {
     let i = 0; let num = '';
@@ -1056,7 +1077,7 @@ function run(text, name, sample) {
   if (!parsed.questions.length) { setStatus(t('noQ'), true); return; }
   const res = TestCore.check(parsed);
   // Univer template: the «0» column is filled in by Univer itself, so a file without marked answers is normal — no hint about keys
-  if (parsed.meta.mode === 'univer') res.issues = res.issues.filter((i) => i.code !== 'noKeysAtAll');
+  if (parsed.meta.mode === 'univer') { res.issues = res.issues.filter((i) => i.code !== 'noKeysAtAll'); res.issues.push(...univerLeftovers(parsed)); }
   res.issues.forEach((i) => { if (CODE_CRIT_EXTRA[i.code]) i.crit = CODE_CRIT_EXTRA[i.code]; });
   S = { ...S, parsed, res, file: name, sample, manual: {} };
   computeSyl();
@@ -1172,6 +1193,7 @@ function renderQ() {
     const is = groups.get(n).sort((a, b) => order[a.sev] - order[b.sev]);
     const cnt = { error: 0, warn: 0, info: 0 }; is.forEach((i) => cnt[i.sev]++);
     const badLetters = new Set(is.filter((i) => i.code === 'dupOpt').flatMap((i) => [i.a, i.b]));
+    is.filter((i) => i.letters).forEach((i) => i.letters.split(', ').forEach((l) => badLetters.add(l)));
     is.filter((i) => i.code === 'forbidden').forEach((i) => (i.words.match(/\(([A-E])\)/g) || []).forEach((m) => badLetters.add(m[1])));
     const lines = is.map((i) => { const ci = CRIT.findIndex((c) => c.id === i.crit); const lab = ci >= 0 ? 'К' + (ci + 1) : 'Univer'; return `<div class="issue"><span class="tag ${sevCls(i.sev)}">${lab}</span><span>${esc(msg(i))}</span></div>`; }).join('');
     const opts = q.options.map((o) => `<div class="opt${o.letter === q.key ? ' key' : ''}${badLetters.has(o.letter) ? ' flag' : ''}"><b>${esc(o.letter)}.</b><span>${esc(o.text)}</span></div>`).join('');
