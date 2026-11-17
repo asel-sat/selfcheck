@@ -154,7 +154,7 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
   <section class="panel load" aria-labelledby="load-h">
     <div class="drop" id="drop">
       <h2 id="load-h" data-i="loadH">1. Загрузите файл с тестом</h2>
-      <span class="formats" data-i="formats">PDF (печать банка из Univer) · DOCX · XLSX · TXT</span>
+      <span class="formats" data-i="formats">PDF (печать банка из Univer) · DOCX (в т.ч. шаблон Univer) · XLSX · TXT</span>
       <div class="row">
         <label class="btn primary" for="file" data-i="choose">Выбрать файл</label>
         <input type="file" id="file" accept=".pdf,.docx,.xlsx,.xls,.txt,.csv" hidden>
@@ -714,7 +714,7 @@ const T = {
  ru: {
   home:'← Проверка качества', eyebrow:'КазНУ · Экспертиза по форме Ф 708-02-26', h1:'Самопроверка тестовых заданий перед загрузкой в ИС Univer',
   lead:'Загрузите банк тестовых заданий — сайт проверит его по критериям чек-листа и требованиям Univer и покажет, что нужно доработать.',
-  formats:'PDF (печать банка из Univer) · DOCX · XLSX · TXT', loadH:'1. Загрузите файл с тестом', choose:'Выбрать файл', demo:'Показать пример', dropHint:'или перетащите файл сюда',
+  formats:'PDF (печать банка из Univer) · DOCX (в т.ч. шаблон Univer) · XLSX · TXT', loadH:'1. Загрузите файл с тестом', choose:'Выбрать файл', demo:'Показать пример', dropHint:'или перетащите файл сюда',
   pasteL:'Или вставьте текст заданий: номер, вопрос, варианты A–E, строка «Ответ - B» (необязательно)', checkPaste:'Проверить текст',
   privacy:'Файл не отправляется на сервер: проверка идет прямо в вашем браузере. Задания никто, кроме вас, не видит.',
   violations:'Нарушений найдено', formH:'2. Чек-лист тестовых заданий', formNote:'«Да» в графе ответа означает нарушение',
@@ -762,7 +762,7 @@ const T = {
  kz: {
   home:'← Емтихан жұмыстарының сапасын тексеру', eyebrow:'ҚазҰУ · Ф 708-02-26 нысаны бойынша сараптама', h1:'Тест тапсырмаларын Univer АЖ енгізбес бұрын өзін - өзі тексеру',
   lead:'Тест тапсырмаларының банкін жүктеңіз — сайт оны чек - парағы критерийлері мен Univer талаптары бойынша тексеріп, нені түзету керегін көрсетеді.',
-  formats:'PDF (Univer-ден банкті басып шығару) · DOCX · XLSX · TXT', loadH:'1. Тест файлын жүктеңіз', choose:'Файлды таңдау', demo:'Мысалды көрсету', dropHint:'немесе файлды осы жерге сүйреңіз',
+  formats:'PDF (Univer-ден банкті басып шығару) · DOCX (Univer үлгісі де) · XLSX · TXT', loadH:'1. Тест файлын жүктеңіз', choose:'Файлды таңдау', demo:'Мысалды көрсету', dropHint:'немесе файлды осы жерге сүйреңіз',
   pasteL:'Немесе тапсырмалар мәтінін қойыңыз: нөмір, сұрақ, A–E нұсқалары, «Жауап - B» жолы (міндетті емес)', checkPaste:'Мәтінді тексеру',
   privacy:'Файл серверге жіберілмейді: тексеру тікелей браузеріңізде жүреді. Тапсырмаларды сізден басқа ешкім көрмейді.',
   violations:'Анықталған Сәйкессіздіктер', formH:'2. Тест тапсырмаларының чек-парағы', formNote:'Жауап бағанындағы «Иә» — сәйкессіздік',
@@ -843,7 +843,8 @@ const MSG = {
   level5:'Есть задания 5-го уровня ({count}), а в новом формате 4 уровня',
   noLevels:'Уровни сложности в файле не найдены — проверьте распределение 40/30/20/10 вручную',
   noKeysAtAll:'В файле нет ключей ответов, поэтому верные ответы не проверены. Для полной проверки выгрузите банк с ответами',
-  typeMulti:'{count} заданий имеют тип «с множественным выбором». По новому формату — один верный ответ из 5 (тип «с одиночным выбором»)'
+  typeMulti:'{count} заданий имеют тип «с множественным выбором». По новому формату — один верный ответ из 5 (тип «с одиночным выбором»)',
+  uniNoKeys:'В шаблоне Univer не отмечены верные ответы: в левой колонке у всех вариантов стоит 0. Поставьте у верного варианта балл больше 0 — тогда сайт проверит и ключи'
  },
  kz: {
   noText:'Тапсырма мәтіні жоқ (немесе тым қысқа)', optCount:'Жауап нұсқалары саны: {count}, ал 5 болуы керек (Univer форматы: 5 нұсқа, 1 дұрыс)',
@@ -868,7 +869,8 @@ const MSG = {
   level5:'5-деңгейлі тапсырмалар бар ({count}), ал жаңа форматта 4 деңгей',
   noLevels:'Файлда күрделілік деңгейлері табылмады — 40/30/20/10 үлесін қолмен тексеріңіз',
   noKeysAtAll:'Файлда жауап кілттері жоқ, сондықтан дұрыс жауаптар тексерілмеді. Толық тексеру үшін банкті жауаптарымен жүктеңіз',
-  typeMulti:'{count} тапсырманың түрі «көп таңдаулы». Жаңа формат бойынша — 5 нұсқадан бір дұрыс жауап («бір таңдаулы» түрі)'
+  typeMulti:'{count} тапсырманың түрі «көп таңдаулы». Жаңа формат бойынша — 5 нұсқадан бір дұрыс жауап («бір таңдаулы» түрі)',
+  uniNoKeys:'Univer үлгісінде дұрыс жауаптар белгіленбеген: сол жақ бағанда барлық нұсқада 0 тұр. Дұрыс нұсқаға 0-ден үлкен балл қойыңыз — сонда сайт кілттерді де тексереді'
  }
 };
 const CODE_CRIT_EXTRA = { optCount:'bank', multiKey:'bank', noKey:'bank', keyMissing:'bank' };
@@ -913,6 +915,7 @@ async function pdfText(buf, keepHeader) {
 async function docxText(buf) {
   const { value } = await mammoth.convertToHtml({ arrayBuffer: buf });
   const div = document.createElement('div'); div.innerHTML = value;
+  const uni = univerDocx(div); if (uni) return uni;
   const lines = [];
   const textOf = (el) => el.textContent.replace(/\s+/g, ' ').trim();
   const isBold = (el) => { const st = el.querySelector('strong'); return st && textOf(st).length >= textOf(el).length * 0.8 && textOf(el).length > 0; };
@@ -944,6 +947,64 @@ async function docxText(buf) {
   };
   walk(div, 0);
   return lines.join('\n');
+}
+// ---------- IS Univer Word template («ШАБЛОН №… НА 80/100/150/200/300 ВОПРОСОВ», рус/қаз/eng) ----------
+// Each level is a 2-column table: a row «V1 | (1.25 из 100) Вопрос с одним верным ответом / текст вопроса»,
+// then answer rows «балл | текст ответа» (0 = неверный, >0 = верный). Returns parsed bank or null if not this format.
+const RE_UNI_V = /^V\s*\d{1,3}$/i;
+const RE_UNI_SCORE = /^\d{1,3}(?:[.,]\d+)?$/;
+const RE_UNI_LVL = /^(?:уровень|деңгей|level)\s*([1-4])\b|^(IV|III|II|I)\s*(?:уровень|деңгей|level)\b/i;
+const RE_UNI_WEIGHT = /\(\s*(\d+(?:[.,]\d+)?)\s*(?:из|of|\/|ішінен)?\s*100\s*\)/i;
+const RE_UNI_TYPE = /^\s*(?:вопрос\s+с\s+(?:одним|одиночным|несколькими|множественным)[\p{L}\s]{0,40}?(?:ответом|ответами|выбором)|(?:single|multi(?:ple)?)[\s-]*(?:select|choice)[\s-]*question(?:\s+text)?|[\p{L}\s]{0,40}?жауап[\p{L}\s]{0,40}?сұрақ\s+мәтіні)\s*[:.\-–—]?\s*/iu;
+function univerDocx(div) {
+  const textOf = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+  const tables = [...div.children].filter((c) => c.tagName === 'TABLE');
+  const isV = (tr) => tr.cells.length >= 2 && RE_UNI_V.test(textOf(tr.cells[0]));
+  if (tables.reduce((n, tb) => n + [...tb.rows].filter(isV).length, 0) < 3) return null;
+  const isBold = (el) => { const st = el.querySelector('strong'); return !!st && textOf(el).length > 0 && textOf(st).length >= textOf(el).length * 0.8; };
+  const qs = []; let level = null, cur = null;
+  for (const ch of div.children) {
+    if (ch.tagName !== 'TABLE') {
+      const tx = textOf(ch); const m = tx.length < 160 && tx.match(RE_UNI_LVL);
+      if (m) level = m[1] ? +m[1] : ({ I: 1, II: 2, III: 3, IV: 4 })[m[2].toUpperCase()];
+      continue;
+    }
+    for (const tr of ch.rows) {
+      if (tr.cells.length < 2) continue;
+      const a = textOf(tr.cells[0]);
+      // question row: «V1» in the left cell, or (template typo) a «0» left cell but a question cell with the «(1.25 из 100)» box
+      const qBox = tr.cells[1].querySelector('table');
+      if (RE_UNI_V.test(a) || (qBox && RE_UNI_WEIGHT.test(textOf(qBox)))) {
+        const td = tr.cells[1].cloneNode(true);
+        const wm = textOf(td).match(RE_UNI_WEIGHT);
+        td.querySelectorAll('table').forEach((x) => x.remove());
+        let body = textOf(td).replace(RE_UNI_WEIGHT, ' ').replace(/\s+/g, ' ').trim();
+        let type = null; const tm = body.match(RE_UNI_TYPE);
+        if (tm && tm[0].trim()) { type = /несколь|множеств|multi|бірнеше|көп/i.test(tm[0]) ? 'multi' : 'single'; body = body.slice(tm[0].length).trim(); }
+        cur = { num: qs.length + 1, text: body, options: [], key: null, level, weight: wm ? parseFloat(wm[1].replace(',', '.')) : null, type, score: [], bold: [] };
+        qs.push(cur);
+      } else if (cur && (RE_UNI_SCORE.test(a) || !a)) {
+        const ot = textOf(tr.cells[1]);
+        if (!a && !ot) continue;
+        cur.options.push({ letter: String.fromCharCode(65 + cur.options.length), text: ot, correct: false });
+        cur.score.push(a ? parseFloat(a.replace(',', '.')) : 0); cur.bold.push(isBold(tr.cells[1]));
+      }
+    }
+    cur = null;
+  }
+  if (!qs.length) return null;
+  const ws = [...new Set(qs.filter((q) => q.weight != null).map((q) => q.weight))].sort((x, y) => x - y);
+  qs.forEach((q) => {
+    if (q.level == null && q.weight != null && ws.length <= 4) q.level = ws.indexOf(q.weight) + 1;
+    const byScore = q.score.some((s) => s > 0);
+    const allBold = q.bold.every(Boolean);
+    q.options.forEach((o, i) => { o.correct = byScore ? q.score[i] > 0 : (!allBold && q.bold[i]); });
+    const marked = q.options.filter((o) => o.correct);
+    if (marked.length === 1) q.key = marked[0].letter;
+    q.markedCount = marked.length;
+    delete q.score; delete q.bold;
+  });
+  return { meta: { title: '', stage: '', levelsBank: {}, mode: 'univer' }, questions: qs };
 }
 function rowToLines(cells, lines) {
   if (cells.length >= 6) {
@@ -993,10 +1054,10 @@ async function readFile(f) {
 function setStatus(s, err) { lastStatus = null; const el = $('#status'); el.textContent = s; el.className = 'status' + (err ? ' err' : ''); }
 
 function run(text, name, sample) {
-  const parsed = TestCore.parse(text);
+  const parsed = typeof text === 'string' ? TestCore.parse(text) : text; // docx in IS Univer template comes already parsed
   if (!parsed.questions.length) { setStatus(t('noQ'), true); return; }
   const res = TestCore.check(parsed);
-  res.issues.forEach((i) => { if (CODE_CRIT_EXTRA[i.code]) i.crit = CODE_CRIT_EXTRA[i.code]; });
+  res.issues.forEach((i) => { if (CODE_CRIT_EXTRA[i.code]) i.crit = CODE_CRIT_EXTRA[i.code]; if (i.code === 'noKeysAtAll' && parsed.meta.mode === 'univer') i.code = 'uniNoKeys'; });
   S = { ...S, parsed, res, file: name, sample, manual: {} };
   computeSyl();
   S.header = (!sample && LAST_HDR) ? TestCore.headerFromItems(LAST_HDR) : null; LAST_HDR = null;
