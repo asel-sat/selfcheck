@@ -843,8 +843,7 @@ const MSG = {
   level5:'Есть задания 5-го уровня ({count}), а в новом формате 4 уровня',
   noLevels:'Уровни сложности в файле не найдены — проверьте распределение 40/30/20/10 вручную',
   noKeysAtAll:'В файле нет ключей ответов, поэтому верные ответы не проверены. Для полной проверки выгрузите банк с ответами',
-  typeMulti:'{count} заданий имеют тип «с множественным выбором». По новому формату — один верный ответ из 5 (тип «с одиночным выбором»)',
-  uniNoKeys:'В шаблоне Univer не отмечены верные ответы: в левой колонке у всех вариантов стоит 0. Поставьте у верного варианта балл больше 0 — тогда сайт проверит и ключи'
+  typeMulti:'{count} заданий имеют тип «с множественным выбором». По новому формату — один верный ответ из 5 (тип «с одиночным выбором»)'
  },
  kz: {
   noText:'Тапсырма мәтіні жоқ (немесе тым қысқа)', optCount:'Жауап нұсқалары саны: {count}, ал 5 болуы керек (Univer форматы: 5 нұсқа, 1 дұрыс)',
@@ -869,8 +868,7 @@ const MSG = {
   level5:'5-деңгейлі тапсырмалар бар ({count}), ал жаңа форматта 4 деңгей',
   noLevels:'Файлда күрделілік деңгейлері табылмады — 40/30/20/10 үлесін қолмен тексеріңіз',
   noKeysAtAll:'Файлда жауап кілттері жоқ, сондықтан дұрыс жауаптар тексерілмеді. Толық тексеру үшін банкті жауаптарымен жүктеңіз',
-  typeMulti:'{count} тапсырманың түрі «көп таңдаулы». Жаңа формат бойынша — 5 нұсқадан бір дұрыс жауап («бір таңдаулы» түрі)',
-  uniNoKeys:'Univer үлгісінде дұрыс жауаптар белгіленбеген: сол жақ бағанда барлық нұсқада 0 тұр. Дұрыс нұсқаға 0-ден үлкен балл қойыңыз — сонда сайт кілттерді де тексереді'
+  typeMulti:'{count} тапсырманың түрі «көп таңдаулы». Жаңа формат бойынша — 5 нұсқадан бір дұрыс жауап («бір таңдаулы» түрі)'
  }
 };
 const CODE_CRIT_EXTRA = { optCount:'bank', multiKey:'bank', noKey:'bank', keyMissing:'bank' };
@@ -1057,7 +1055,9 @@ function run(text, name, sample) {
   const parsed = typeof text === 'string' ? TestCore.parse(text) : text; // docx in IS Univer template comes already parsed
   if (!parsed.questions.length) { setStatus(t('noQ'), true); return; }
   const res = TestCore.check(parsed);
-  res.issues.forEach((i) => { if (CODE_CRIT_EXTRA[i.code]) i.crit = CODE_CRIT_EXTRA[i.code]; if (i.code === 'noKeysAtAll' && parsed.meta.mode === 'univer') i.code = 'uniNoKeys'; });
+  // Univer template: the «0» column is filled in by Univer itself, so a file without marked answers is normal — no hint about keys
+  if (parsed.meta.mode === 'univer') res.issues = res.issues.filter((i) => i.code !== 'noKeysAtAll');
+  res.issues.forEach((i) => { if (CODE_CRIT_EXTRA[i.code]) i.crit = CODE_CRIT_EXTRA[i.code]; });
   S = { ...S, parsed, res, file: name, sample, manual: {} };
   computeSyl();
   S.header = (!sample && LAST_HDR) ? TestCore.headerFromItems(LAST_HDR) : null; LAST_HDR = null;
