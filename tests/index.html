@@ -272,6 +272,8 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../docx-prep.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -282,11 +284,33 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
   const HOMO = { 'А': 'A', 'В': 'B', 'С': 'C', 'Д': 'D', 'Е': 'E', 'а': 'A', 'в': 'B', 'с': 'C', 'д': 'D', 'е': 'E', 'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E' };
   const normLetter = (l) => HOMO[l] || l.toUpperCase();
 
+  // Math signs are kept as separate tokens, otherwise «a × b» and «a ÷ b», «x + y» and «x − y» look identical.
+  // «-», «:», «/», «!» are also ordinary punctuation («Карта – это:», «и/или»), so they count only between
+  // operands (digits, single Latin letters, brackets) or when the whole answer is made of signs («!=», «/*»).
+  const SIGNS = '+×÷=<>≤≥≠≈≡^√∛∜∑∏∫∂∆∇%±∓∞°∈∉⊂⊆⊃∪∩→⇒⇔∧∨¬|';
+  const PH = { '-': '\uE001', ':': '\uE002', '/': '\uE003', '!': '\uE004' };
+  const UNPH = Object.fromEntries(Object.entries(PH).map(([a, b]) => [b, a]));
+  const OPND = '(?:\\p{N}|(?<!\\p{L})[a-z]|[)\\]])';
+  const RE_AMBIG = new RegExp('(?<=' + OPND + '\\s*)[:/-](?=\\s*(?:\\p{N}|[a-z](?!\\p{L})|[(\\[]))', 'gu');
+  const RE_FACT = new RegExp('(?<=' + OPND + '\\s*)!', 'gu');
+  const RE_NOT_WORD = new RegExp('[^\\p{L}\\p{N}' + SIGNS + '\uE001-\uE004]+', 'gu');
+  const RE_SIGN = new RegExp('([' + SIGNS + '\uE001-\uE004])', 'gu');
   function norm(s) {
-    return (s || '').toLowerCase().replace(/ё/g, 'е')
+    s = (s || '').toLowerCase().replace(/ё/g, 'е')
       .replace(/[«»"“”„'’`]/g, '')
-      .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+      .replace(/[·∙⋅*✕]/g, '×').replace(/∶/g, ':').replace(/\u2215/g, '/').replace(/[–—‒]/g, '-')
+      .replace(/−/g, PH['-']);
+    s = /[\p{L}\p{N}]/u.test(s) ? s.replace(RE_AMBIG, (m) => PH[m]).replace(RE_FACT, PH['!']) : s.replace(/[-:/!]/g, (m) => PH[m]);
+    return s.replace(RE_NOT_WORD, ' ').replace(RE_SIGN, ' $1 ').replace(/[\uE001-\uE004]/g, (m) => UNPH[m])
+      .replace(/\s+/g, ' ').trim();
   }
+  // digits and signs / signs only: questions that differ here are different tasks, not typos
+  const mathSig = (s) => norm(s).replace(/[\p{L}\s]+/gu, '');
+  const signSig = (s) => norm(s).replace(/[\p{L}\p{N}\s]+/gu, '');
+  // an option that ends right after «=» lost its formula when the file was saved («D = ;», «M(x)= .»)
+  const RE_LOST = /(?:[\p{L}\p{N})\]*]\s*=\s*[;.,]?|^\s*=\s*[;.,])\s*$/u; // a bare «=» is a valid answer (operators)
+  // formula or picture that the site cannot read (see docx-prep.js and docxText)
+  const RE_PIC = /\[(формула|рисунок)\]/;
 
   const FOOTER = [/^https?:\/\//i, /^\d{2}\.\d{2}\.\d{4},?\s*\d{1,2}:\d{2}/, /^\d+\s*\/\s*\d+$/, /^стр\.?\s*\d+/i];
   const RE_NOMER = /^№\s*(\d+)\s*[.)]?\s*(.*)$/;
@@ -436,6 +460,8 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
       if (norm(qt).length < 8) add('k4', 'error', 'noText', n);
       if (q.options.length !== 5) add('bank', 'error', 'optCount', n, { count: q.options.length });
       if (q.options.some((o) => !norm(o.text))) add('k6', 'error', 'emptyOpt', n);
+      if (RE_PIC.test(qt + ' ' + q.options.map((o) => o.text).join(' '))) add('k6', 'info', 'picMath', n);
+      else if (q.options.some((o) => norm(o.text) && RE_LOST.test(o.text))) add('k6', 'warn', 'lostFormula', n);
       if (q.markedCount > 1) add('bank', 'error', 'multiKey', n);
       if (hasKeys && !q.key) add('bank', 'warn', 'noKey', n);
       if (q.key && q.options.length && !q.options.some((o) => o.letter === q.key)) add('bank', 'error', 'keyMissing', n, { key: q.key });
@@ -443,9 +469,10 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
       if (VISUAL.test(qt)) add('k6', 'info', 'visual', n);
 
       // --- k4 unclear
-      const qBody = qt.replace(/(\s*[–—-]?\s*(бұл|это|this)?\s*(…+|\.{2,}|_{2,})[.…]*\s*[.:?]?\s*)$/iu, '');
-      if (/_{3,}|\.{4,}|…/.test(qBody)) add('k4', 'warn', 'blank', n);
-      else if (/[–—-]\s*$|[._…]{3,}\s*$/.test(qt)) add('k4', 'info', 'fragment', n);
+      // fill-in-the-blank («вставьте пропущенное слово») is a normal task type: one gap is fine, several gaps get a hint
+      const gaps = (qt.match(/_{3,}|\.{4,}|…|\(\s*\.{3}\s*\)/g) || []).length;
+      if (gaps >= 2) add('k4', 'info', 'blanks', n, { count: gaps });
+      else if (!gaps && /[–—-]\s*$/.test(qt)) add('k4', 'info', 'fragment', n);
       if (GENERIC.test(qt)) add('k4', 'warn', 'generic', n);
       if (qt.length > 700) add('k4', 'info', 'longQ', n);
 
@@ -463,7 +490,7 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
       // --- k8 duplicate options
       const seen = new Map();
       q.options.forEach((o) => {
-        const k = norm(o.text); if (!k) return;
+        const k = norm(o.text); if (!k || RE_PIC.test(o.text)) return;
         if (seen.has(k)) add('k8', 'error', 'dupOpt', n, { a: seen.get(k), b: o.letter, text: o.text });
         else seen.set(k, o.letter);
       });
@@ -505,7 +532,8 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
     qs.forEach((q) => {
       const t = norm(q.text);
       const s = t + '||' + q.options.map((o) => norm(o.text)).sort().join('|');
-      if (!t) return;
+      if (!t || RE_PIC.test(q.text)) return; // unreadable formula: the texts may differ in the picture
+      if (q.options.some((o) => RE_PIC.test(o.text))) { if (txt.has(t)) add('k7', 'warn', 'dupText', [txt.get(t), q.num]); else txt.set(t, q.num); return; }
       if (sig.has(s)) { add('k7', 'error', 'dupFull', [sig.get(s), q.num]); return; }
       sig.set(s, q.num);
       if (txt.has(t)) add('k7', 'warn', 'dupText', [txt.get(t), q.num]);
@@ -515,7 +543,7 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
     // near-full duplicates: same set of options + very similar question text (typos)
     const byOpts = new Map();
     qs.forEach((q, i) => {
-      if (q.options.length < 3) return;
+      if (q.options.length < 3 || RE_PIC.test(q.text)) return;
       const k = q.options.map((o) => norm(o.text)).sort().join('|');
       if (!byOpts.has(k)) byOpts.set(k, []);
       byOpts.get(k).push(i);
@@ -527,6 +555,11 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
       if (fullPairs.has(key)) continue;
       const sim = jaccard(toks[arr[a]], toks[arr[b]]);
       const ca = norm(qa.text), cb = norm(qb.text);
+      if (signSig(qa.text) !== signSig(qb.text)) continue; // «2 × 3» vs «2 ÷ 3»: different tasks
+      if (mathSig(qa.text) !== mathSig(qb.text)) { // only numbers differ («3000 м» / «4000 м»): a hint, not an error
+        if (sim >= 0.6) { add('k7', 'info', 'similar', [qa.num, qb.num], { pct: Math.round(sim * 100) }); fullPairs.add(key); }
+        continue;
+      }
       if (sim >= 0.6 || ca.slice(0, -3) === cb.slice(0, -3)) { add('k7', 'error', 'dupFull', [qa.num, qb.num]); fullPairs.add(key); }
     }
     const flagged = new Set(issues.filter((i) => i.crit === 'k7').map((i) => i.nums.join('-')));
@@ -534,6 +567,7 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
     for (let i = issues.length - 1; i >= 0; i--) if (issues[i].code === 'dupText' && fullPairs.has(issues[i].nums.join('-'))) issues.splice(i, 1);
     for (let i = 0; i < qs.length; i++) for (let j = i + 1; j < qs.length; j++) {
       if (toks[i].size < 4) continue;
+      if (RE_PIC.test(qs[i].text) || RE_PIC.test(qs[j].text) || signSig(qs[i].text) !== signSig(qs[j].text)) continue;
       const s = jaccard(toks[i], toks[j]);
       if (s >= 0.75 && !flagged.has(qs[i].num + '-' + qs[j].num) && norm(qs[i].text) !== norm(qs[j].text)) add('k7', 'info', 'similar', [qs[i].num, qs[j].num], { pct: Math.round(s * 100) });
     }
@@ -812,7 +846,7 @@ const CRIT = [
  { id:'k1', why:{ru:'Сайт не ищет в интернете: проверка идет только в браузере, без выхода в поисковые системы. Вставьте 3–5 вопросов в Google или Яндекс; если находится готовый ответ, переформулируйте вопрос.',kz:'Сайт интернеттен іздемейді: тексеру тек браузерде, іздеу жүйелерінсіз жүреді. 3–5 сұрақты Google немесе Яндекске енгізіңіз; дайын жауап табылса, сұрақты қайта тұжырымдаңыз.'}, how:'man', ru:['Вопрос можно дословно найти в открытых источниках с готовым ответом','Проверяемость через поиск'], kz:['Сұрақты дайын жауабымен ашық дереккөздерден сөзбе-сөз табуға болады','Іздеу арқылы тексерілуі'] },
  { id:'k2', why:{ru:'Автоматически проверяются только формальные признаки: длина верного ответа и частота букв ключа. Однородны ли и правдоподобны ли варианты по смыслу, может оценить только специалист по дисциплине.',kz:'Автоматты түрде тек формалды белгілер тексеріледі: дұрыс жауаптың ұзындығы және кілт әріптерінің жиілігі. Нұсқалардың мағынасы бойынша біртектілігі мен нанымдылығын тек пән маманы бағалай алады.'}, how:'part', inverse:true, ru:['Варианты однородны и правдоподобны; верный ответ не выделяется по длине, структуре, стилю','Независимость ответа от формальных признаков'], kz:['Жауап нұсқалары біртекті әрі нанымды; дұрыс жауап сыртқы белгілерімен ерекшеленбейді','Жауаптың формалды белгілерге тәуелсіздігі'] },
  { id:'k3', why:{ru:'Сайт находит только формальные подсказки: комбинированные варианты («А и В»), «все перечисленное». Можно ли угадать ответ, отбросив явно неверные варианты, зависит от содержания дисциплины, это оценивает преподаватель.',kz:'Сайт тек формалды белгілерді табады: аралас нұсқалар («А және В»), «барлығы». Анық қате нұсқаларды алып тастау арқылы жауапты табуға бола ма — бұл пән мазмұнына байланысты, оны оқытушы бағалайды.'}, how:'part', ru:['Задание можно выполнить без понимания содержания (за счет исключения вариантов)','Понимание содержания'], kz:['Тапсырманы мазмұнды түсінбей-ақ, нұсқаларды алып тастау арқылы орындауға болады','Мазмұнды түсіну'] },
- { id:'k4', why:{ru:'Сайт отмечает пропуски, незаконченные и слишком общие формулировки. Допускает ли вопрос двоякое толкование, зависит от смысла и терминологии дисциплины, это оценивает преподаватель.',kz:'Сайт бос орындарды, аяқталмаған және тым жалпы тұжырымдарды белгілейді. Сұрақтың екіұшты түсінілуі пәннің мағынасы мен терминологиясына байланысты, оны оқытушы бағалайды.'}, how:'part', ru:['Вопрос сформулирован неясно или допускает более одной интерпретации','Однозначность формулировки'], kz:['Сұрақ түсініксіз тұжырымдалған немесе бірнеше түрлі түсіндіруге мүмкіндік береді','Тұжырымның бірмәнділігі'] },
+ { id:'k4', why:{ru:'Сайт отмечает незаконченные и слишком общие формулировки. Задание «вставьте пропущенное слово» (пропуск ___ или …) считается нормальным, подсказка появится только при нескольких пропусках в одном вопросе. Допускает ли вопрос двоякое толкование, зависит от смысла и терминологии дисциплины, это оценивает преподаватель.',kz:'Сайт аяқталмаған және тым жалпы тұжырымдарды белгілейді. «Бос орынға сөз қойыңыз» тапсырмасы (___ немесе …) қалыпты саналады, бір сұрақта бірнеше бос орын болса ғана кеңес шығады. Сұрақтың екіұшты түсінілуі пәннің мағынасы мен терминологиясына байланысты, оны оқытушы бағалайды.'}, how:'part', ru:['Вопрос сформулирован неясно или допускает более одной интерпретации','Однозначность формулировки'], kz:['Сұрақ түсініксіз тұжырымдалған немесе бірнеше түрлі түсіндіруге мүмкіндік береді','Тұжырымның бірмәнділігі'] },
  { id:'k5', how:'auto', ru:['Присутствуют двойные отрицания (не… не…)','Правило тестологии'], kz:['Қосарланған терістеу бар («...емес... емес...»)','Тестология қағидаты'] },
  { id:'k6', why:{ru:'В выгрузке из Univer (PDF, Word) рисунки и формулы часто не сохраняются как текст, поэтому сайт видит только слова «рисунок», «таблица», «схема» и нечитаемые символы. Откройте задания с рисунками и формулами в Univer и убедитесь, что все отображается правильно.',kz:'Univer-ден алынған файлда (PDF, Word) суреттер мен формулалар көбіне мәтін ретінде сақталмайды, сондықтан сайт тек «сурет», «кесте», «сызба» сөздерін және оқылмайтын таңбаларды көреді. Сурет пен формуласы бар тапсырмаларды Univer-де ашып, дұрыс көрсетілетінін тексеріңіз.'}, how:'part', ru:['Формулы, схемы, таблицы или изображения отображаются некорректно','Корректность визуальных материалов'], kz:['Формулалар, сызбалар, кестелер немесе суреттер дұрыс көрсетілмейді','Көрнекі материалдардың дұрыстығы'] },
  { id:'k7', how:'auto', ru:['В тесте есть полностью повторяющиеся задания (перефразирование допускается)','Уникальность вопросов'], kz:['Тестте толық қайталанатын тапсырмалар бар (қайта тұжырымдауға жол беріледі)','Сұрақтардың бірегейлігі'] },
@@ -826,7 +860,9 @@ const MSG = {
   keyMissing:'Ключ «{key}» не совпадает ни с одним вариантом', badChars:'Нечитаемые символы — проверьте кодировку и формулы',
   visual:'Упоминается рисунок, таблица или схема — убедитесь, что изображение загружено и читается в Univer',
   doubleLetter:'В тексте вариантов есть лишние буквы (например «A. E. …») — в Univer варианты будут с двойной нумерацией',
-  blank:'Пропуск в середине предложения (… или ___). Лучше сформулировать прямой вопрос',
+  blanks:'В вопросе несколько пропусков ({count}). Проверьте, что ясно, какой пропуск заполняет ответ',
+  lostFormula:'В варианте ответа после «=» ничего нет: похоже, формула не сохранилась в файле. Проверьте задание в Univer',
+  picMath:'Формула или рисунок вставлены картинкой, сайт их не читает. Сверьте это задание вручную (повторы и варианты)',
   fragment:'Вопрос оформлен как незаконченное предложение. Это допустимо, но прямой вопрос понятнее',
   generic:'Общая формулировка «Какое утверждение верно?» без четкой проблемы. Уточните, о чем вопрос',
   longQ:'Очень длинный текст задания — проверьте, нет ли лишней информации',
@@ -854,7 +890,9 @@ const MSG = {
   keyMissing:'«{key}» кілті ешбір нұсқаға сәйкес келмейді', badChars:'Оқылмайтын таңбалар бар — кодтауды және формулаларды тексеріңіз',
   visual:'Сурет, кесте немесе сызба аталған — оның Univer-де жүктелгенін және анық көрінетінін тексеріңіз',
   doubleLetter:'Нұсқа мәтінінде артық әріптер бар (мысалы «A. E. …») — Univer-де нұсқалар қос нөмірмен көрінеді',
-  blank:'Сөйлем ортасында бос орын бар (… немесе ___). Тікелей сұрақ ретінде тұжырымдаған дұрыс',
+  blanks:'Сұрақта бірнеше бос орын бар ({count}). Жауап қай бос орынды толтыратыны түсінікті екенін тексеріңіз',
+  lostFormula:'Жауап нұсқасында «=» белгісінен кейін ештеңе жоқ: формула файлда сақталмаған сияқты. Тапсырманы Univer-де тексеріңіз',
+  picMath:'Формула немесе сурет сурет түрінде қойылған, сайт оларды оқымайды. Бұл тапсырманы қолмен тексеріңіз (қайталау мен нұсқалар)',
   fragment:'Сұрақ аяқталмаған сөйлем түрінде. Бұған жол беріледі, бірақ тікелей сұрақ түсініктірек',
   generic:'«Қай тұжырым дұрыс?» деген жалпы тұжырым, нақты мәселе жоқ. Сұрақты нақтылаңыз',
   longQ:'Тапсырма мәтіні тым ұзын — артық ақпарат жоқ па, тексеріңіз',
@@ -917,8 +955,10 @@ async function pdfText(buf, keepHeader) {
 }
 
 async function docxText(buf) {
+  if (window.DocxPrep) buf = await DocxPrep.prepDocx(buf); // Word equations → text, underlined blanks → ___
   const { value } = await mammoth.convertToHtml({ arrayBuffer: buf });
   const div = document.createElement('div'); div.innerHTML = value;
+  div.querySelectorAll('img').forEach((im) => im.replaceWith(' [рисунок] '));
   const uni = univerDocx(div); if (uni) return uni;
   const lines = [];
   const textOf = (el) => el.textContent.replace(/\s+/g, ' ').trim();
